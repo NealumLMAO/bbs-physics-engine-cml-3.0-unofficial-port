@@ -4,7 +4,7 @@ import mchorse.bbs_mod.cubic.ModelInstance;
 import mchorse.bbs_mod.cubic.data.model.Model;
 import mchorse.bbs_mod.cubic.data.model.ModelGroup;
 import mchorse.bbs_mod.film.Film;
-import mchorse.bbs_mod.film.replays.tracks.TrackId;
+import mchorse.bbs_mod.film.replays.PerLimbService;
 import mchorse.bbs_mod.film.replays.Replay;
 import mchorse.bbs_mod.forms.FormUtils;
 import mchorse.bbs_mod.forms.FormUtilsClient;
@@ -288,7 +288,7 @@ public final class PhysicsBake
                     continue;
                 }
 
-                String key = TrackId.bone(entry.getValue(), group.id).toKey();
+                String key = PerLimbService.toPoseBoneKey(entry.getValue(), group.id);
                 PoseTransform old = this.existing(key);
                 PoseTransform value = new PoseTransform();
 

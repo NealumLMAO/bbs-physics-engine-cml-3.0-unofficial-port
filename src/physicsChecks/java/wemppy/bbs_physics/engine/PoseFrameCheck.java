@@ -20,19 +20,19 @@ public final class PoseFrameCheck
     private static void release()
     {
         var held = new mchorse.bbs_mod.forms.forms.utils.Anchor();
-        held.replay = "hand";
+        held.replay = 0;
         held.attachment = "arm";
         var free = new mchorse.bbs_mod.forms.forms.utils.Anchor();
         free.previous = held;
         free.x = 0.4F;
         var target = wemppy.bbs_physics.forms.PhysicsAnchor.release(free, 0.6F);
-        if (!target.hasSameTarget(held) || target.previous != null || free.previous != held || free.x != 0.4F)
+        if (!target.equals(held) || target.previous != null || free.previous != held || free.x != 0.4F)
             throw new AssertionError("Release changed author data or lost the held target");
         if (wemppy.bbs_physics.forms.PhysicsAnchor.release(free, 0F) != free
             || wemppy.bbs_physics.forms.PhysicsAnchor.release(free, 1F) != free)
             throw new AssertionError("Full ownership must keep authored anchoring");
         var other = new mchorse.bbs_mod.forms.forms.utils.Anchor();
-        other.replay = "other";
+        other.replay = 1;
         other.previous = held;
         if (wemppy.bbs_physics.forms.PhysicsAnchor.release(other, 0.6F) != other)
             throw new AssertionError("Transfer between two targets changed");

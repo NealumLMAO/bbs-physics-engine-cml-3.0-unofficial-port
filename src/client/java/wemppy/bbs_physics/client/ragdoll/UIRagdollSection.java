@@ -345,7 +345,7 @@ public class UIRagdollSection extends UIBoneSection
 
         if (this.model != null)
         {
-            this.presetGroup = this.model.getPoseGroup();
+            this.presetGroup = this.model.poseGroup;
         }
 
         this.updateLabels();

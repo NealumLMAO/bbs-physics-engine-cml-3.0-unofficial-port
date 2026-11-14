@@ -4,12 +4,12 @@ import mchorse.bbs_mod.film.BaseFilmController;
 import mchorse.bbs_mod.film.replays.Replay;
 import mchorse.bbs_mod.forms.entities.IEntity;
 import mchorse.bbs_mod.forms.forms.Form;
-import mchorse.bbs_mod.forms.renderers.utils.RenderFrame;
+
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
+
 
 /**
  * The film's actors, as the simulation needs them: able to be stood on any tick, and put back
@@ -68,11 +68,13 @@ public final class SceneCast implements Iterable<SceneCast.Member>
             return;
         }
 
-        Map<String, IEntity> entities = controller.getEntities();
+        io.netty.util.collection.IntObjectMap<IEntity> entities = controller.getEntities();
 
-        for (Replay replay : controller.film.replays.getList())
+        List<Replay> replays = controller.film.replays.getList();
+        for (int index = 0; index < replays.size(); index++)
         {
-            IEntity entity = entities.get(replay.getId());
+            Replay replay = replays.get(index);
+            IEntity entity = entities.get(index);
 
             if (entity != null)
             {
@@ -137,12 +139,8 @@ public final class SceneCast implements Iterable<SceneCast.Member>
      */
     public void apply(int tick)
     {
-        /* Track runtime writes do not bump the form's pose version. A catch-up evaluates many
-         * film ticks in one render frame, so both channel and anchor-matrix caches must forget
-         * the previous sample. This also covers restore(), before the viewport reads its pose. */
-        RenderFrame.invalidate();
-
-        for (Member member : this.members)
+        // CML evaluates each sample directly; it has no shared channel epoch cache.
+for (Member member : this.members)
         {
             if (member.replay == null)
             {

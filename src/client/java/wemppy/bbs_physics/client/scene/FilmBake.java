@@ -25,16 +25,19 @@ public final class FilmBake
 
     public static UIButton button(UIFilmPanel panel, Supplier<Replay> selected)
     {
-        UIButton button = new UIButton(PhysicsKeys.BAKE, (b) -> confirm(panel, selected.get(), b.getContext()));
+        UIButton button = new UIButton(PhysicsKeys.BAKE, (b) -> confirm(panel, selected.get(), b.getContext()))
+        {
+            @Override public void render(UIContext context)
+            {
+                Replay replay = selected.get();
+                this.setEnabled(replay != null && FormTreeWalk.any(replay.form.get(),
+                    form -> PhysicsForms.isSimulated(form) && !StructureDestruction.isEnabled(form)));
+                super.render(context);
+            }
+        };
 
         button.tooltip(PhysicsKeys.BAKE_ACTOR_TOOLTIP);
-        button.valueBinding(() ->
-        {
-            Replay replay = selected.get();
 
-            button.setEnabled(replay != null && FormTreeWalk.any(replay.form.get(),
-                form -> PhysicsForms.isSimulated(form) && !StructureDestruction.isEnabled(form)));
-        });
 
         return button;
     }

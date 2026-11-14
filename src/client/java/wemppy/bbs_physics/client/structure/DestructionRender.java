@@ -6,7 +6,7 @@ import net.minecraft.nbt.NbtCompound;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3i;
 import org.joml.Vector3f;
-import mchorse.bbs_mod.api.client.render.StructureRenderPart;
+
 import mchorse.bbs_mod.forms.forms.StructureForm;
 import wemppy.bbs_physics.structure.DestructionState;
 
@@ -68,7 +68,7 @@ public final class DestructionRender
             NbtCompound nbt = this.source.getBlockEntities().get(p);
             if (nbt != null) entities.put(local, nbt.copy());
         }
-        StructureRenderData data = StructureRenderPart.createData(this.source.id,
+        StructureRenderData data = StructureRenderData.create(this.source.id,
             new Vec3i(maxX - minX + 1, maxY - minY + 1, maxZ - minZ + 1), states, entities);
         return new Part(new StructureRenderPart(this.form, data, this.biome,
             new Vector3f(this.state.offset).add(minX, minY, minZ)));

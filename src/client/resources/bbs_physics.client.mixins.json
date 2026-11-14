@@ -1,12 +1,28 @@
 {
-    "required": true,
-    "package": "wemppy.bbs_physics.mixin.client",
-    "compatibilityLevel": "JAVA_21",
-    "client": [
-        "UIClipsMixin",
-        "UILandingScreenMixin"
-    ],
-    "injectors": {
-        "defaultRequire": 1
-    }
+    "injectors":  {
+                      "defaultRequire":  1
+                  },
+    "package":  "wemppy.bbs_physics.mixin.client",
+    "client":  [
+                   "UIClipsMixin",
+                   "StructureFormRendererMixin",
+                   "FormRendererMixin",
+                   "FilmMatricesMixin",
+                   "UIPickableFormRendererMixin",
+                   "UIFormRendererMixin",
+                   "ModelPoseMixin",
+                   "ModelMatrixPoseMixin",
+                   "ChainClaimMixin",
+                   "PivotOffsetMixin",
+                   "ActorRenderMixin",
+                   "FilmValueMixin",
+                   "FilmToolsMixin",
+                   "FilmPickingMixin",
+                   "FormToolsMixin",
+        "FormGizmoMixin",
+                   "ReplayBakeMixin",
+                   "UIFilmKeyframesMixin"
+               ],
+    "compatibilityLevel":  "JAVA_21",
+    "required":  true
 }

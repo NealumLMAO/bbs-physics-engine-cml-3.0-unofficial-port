@@ -1,5 +1,5 @@
 plugins {
-	id 'fabric-loom' version '1.15-SNAPSHOT'
+	id 'fabric-loom' version '1.19-SNAPSHOT'
 	id 'maven-publish'
 }
 
@@ -23,6 +23,20 @@ repositories {
 	// Where Jolt comes from. Loom brings in the Fabric and Mojang repositories on its own,
 	// but not this one.
 	mavenCentral()
+
+	// Modrinth Maven (extra deps that are online)
+	exclusiveContent {
+		forRepository {
+			maven {
+				name = "Modrinth"
+				url = "https://api.modrinth.com/maven"
+			}
+		}
+		// forRepositories(fg.repository) // Uncomment when using ForgeGradle
+		filter {
+			includeGroup "maven.modrinth"
+		}
+	}
 }
 
 // The platforms the Jolt native library is bundled for. Anything outside this list still runs
@@ -33,7 +47,7 @@ def joltPlatforms = ["Windows64", "Linux64", "Linux_ARM64", "MacOSX64", "MacOSX_
 // The BBS jar this addon is built against. It lives in `libs/` rather than in a repository,
 // because BBS is not published to any — the jar is dropped in by hand, one per Minecraft
 // version, and `bbs_version` in gradle.properties says which of them is the current one.
-def bbsArtifact = file("${projectDir}/libs/bbs-${bbs_version}.jar")
+def bbsArtifact = file("${projectDir}/libs/bbs-cml-${bbs_version}.jar")
 
 if (!bbsArtifact.isFile()) {
 	throw new GradleException("BBS ${bbs_version} is missing: expected ${bbsArtifact}. Drop the jar into libs/ or point bbs_version at one that is there.")
@@ -77,11 +91,12 @@ dependencies {
 	// The mod this one is an addon to. Loom remaps it back to the development mappings and
 	// puts it on the run classpath, so `runClient` starts the game with BBS present.
 	//
-	// It comes in as a plain file rather than through a repository, so nothing transitive
-	// rides along — which is what we want anyway: BBS is compiled against Sodium, Iris and
-	// the shader tooling, and dragging those into this dev runtime buys nothing but a slower
-	// launch and failure modes that have nothing to do with physics.
+	// The local CML jar has no transitive dependency metadata.
 	modImplementation files(bbsArtifact)
+
+    // CML has required Iris/Sodium mixins. These dependencies are development runtime only.
+    modRuntimeOnly "maven.modrinth:YL57xq9U:zsoi0dso" // Iris 1.8.8 for Fabric 1.21.1
+    modRuntimeOnly "maven.modrinth:AANobbMI:u1OEbNKx" // Sodium 0.6.13 for Fabric 1.21.1
 
 	// Jolt Physics. Every platform artifact of jolt-jni carries the same Java classes, so one
 	// of them is taken for the API and the rest contribute nothing but their native library,
@@ -192,4 +207,18 @@ publishing {
 	repositories {
 		// Add repositories to publish to here.
 	}
+}
+
+// Opt-in client smoke checks use a separate development mod and are never shipped in the addon.
+sourceSets {
+    cmlSmoke {
+        compileClasspath += sourceSets.main.output + sourceSets.client.output + sourceSets.client.compileClasspath
+        runtimeClasspath += sourceSets.main.output + sourceSets.client.output + sourceSets.client.runtimeClasspath
+    }
+}
+if (providers.gradleProperty('cmlSmoke').isPresent()) {
+    loom.mods {
+        bbs_physics_cml_smoke { sourceSet sourceSets.cmlSmoke }
+    }
+    tasks.named('runClient') { dependsOn cmlSmokeClasses; classpath += sourceSets.cmlSmoke.output }
 }

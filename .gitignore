@@ -41,4 +41,5 @@ replay_*.log
 *.jfr
 
 .claude/settings.local.json
+og-sources/
 libs/

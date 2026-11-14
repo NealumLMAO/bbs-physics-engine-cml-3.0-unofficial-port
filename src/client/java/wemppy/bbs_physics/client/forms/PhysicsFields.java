@@ -4,8 +4,8 @@ import mchorse.bbs_mod.ui.UIKeys;
 import mchorse.bbs_mod.l10n.keys.IKey;
 import mchorse.bbs_mod.ui.framework.elements.UISection;
 import mchorse.bbs_mod.ui.utils.UIConstants;
-import java.util.HashMap;
-import java.util.Map;
+
+
 import mchorse.bbs_mod.ui.forms.editors.utils.UICropOverlayPanel;
 import mchorse.bbs_mod.ui.framework.UIContext;
 import mchorse.bbs_mod.ui.framework.elements.UIElement;
@@ -32,12 +32,10 @@ import java.util.function.Supplier;
  */
 public final class PhysicsFields
 {
-    private static final Map<String, Boolean> FOLDS = new HashMap<>();
-
-    /** Native sections, remembering folds across editor rebuilds for this session. */
+/** Native sections, remembering folds across editor rebuilds for this session. */
     public static UISection section(IKey title, String id, UIElement... fields)
     {
-        UISection section = new UISection(title).remember(FOLDS, id, true);
+        UISection section = new UISection(title).stateId("bbs_physics." + id);
 
         section.fields.column(UIConstants.MARGIN).vertical().stretch();
         section.fields.add(fields);
@@ -45,18 +43,11 @@ public final class PhysicsFields
         return section;
     }
 
-    /** Bone lists use spare panel height only while their section is open. */
+    /** Uses CML's persistent section layout for the bone list. */
     public static UISection boneSection(String id, UIElement... fields)
     {
-        UISection section = section(PhysicsKeys.SECTION_BONES, id, fields);
-
-        section.fields.expand();
-        section.expand(section.isExpanded());
-        section.onToggle((value) -> value.expand(value.isExpanded()));
-
-        return section;
+        return section(PhysicsKeys.SECTION_BONES, id, fields);
     }
-
     private PhysicsFields()
     {}
 

@@ -35,7 +35,7 @@ public class PhysicsKnobValue extends ValueFloat
         this.fallback = fallback;
         this.shown = shown;
 
-        this.slider();
+        // BBS CML creates numeric controls through UIValueFactory; no slider flag is needed.
     }
 
     public float getFallback()

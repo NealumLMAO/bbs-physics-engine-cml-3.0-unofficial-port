@@ -4,12 +4,12 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import mchorse.bbs_mod.BBSModClient;
 import mchorse.bbs_mod.client.BBSRendering;
 import mchorse.bbs_mod.client.BBSShaders;
-import mchorse.bbs_mod.forms.FormTranslucentQueue;
+import mchorse.bbs_mod.client.rendering.soft.SoftFlatDraw;
 import mchorse.bbs_mod.forms.forms.Form;
 import mchorse.bbs_mod.forms.renderers.FormRenderer;
 import mchorse.bbs_mod.forms.renderers.FormRenderingContext;
 import mchorse.bbs_mod.forms.renderers.ModelFormRenderer;
-import mchorse.bbs_mod.forms.renderers.utils.FormColorBlend;
+
 import mchorse.bbs_mod.graphics.texture.Texture;
 import mchorse.bbs_mod.resources.Link;
 import mchorse.bbs_mod.ui.framework.UIContext;
@@ -147,7 +147,7 @@ public abstract class TexturedMeshFormRenderer<T extends Form & ITexturedForm> e
             shading ? BBSShaders::getPickerBillboardProgram : BBSShaders::getPickerBillboardNoShadingProgram
         );
 
-        this.draw(format, shader, context.stack, context.overlay, context.light, context.color, context.getTransition(), !context.isPicking());
+        this.draw(format, shader, context.stack, context.overlay, context.light, context.color, context.getTransition(), !context.ui && !context.isPicking());
     }
 
     private void draw(VertexFormat format, Supplier<ShaderProgram> shader, MatrixStack matrices, int overlay, int light, int overlayColor, float transition, boolean defer)
@@ -187,7 +187,7 @@ public abstract class TexturedMeshFormRenderer<T extends Form & ITexturedForm> e
 
         /* A plain multiplier: BBS dropped the additive brighten mode in 2.6 — it clipped to
          * flat white in any 8-bit target — and converts the old flag away on load. */
-        FormColorBlend.blend(color, this.form.getColor().get());
+        color.mul(this.form.getColor().get());
 
         GameRenderer gameRenderer = MinecraftClient.getInstance().gameRenderer;
 
@@ -213,45 +213,27 @@ public abstract class TexturedMeshFormRenderer<T extends Form & ITexturedForm> e
         RenderSystem.defaultBlendFunc();
         RenderSystem.enableBlend();
 
-        boolean translucent = texture.hasTranslucency() || color.a < 1F || linear || mipmap;
-
         BuiltBuffer built = builder.endNullable();
-
         if (built != null)
         {
-            if (defer && translucent && FormTranslucentQueue.isActive())
+            Runnable draw = () ->
             {
-                /* The same end-of-frame deferral the picture form does, for the same reasons: correct
-                 * blending against other translucent forms, no occlusion of what is behind. The plane
-                 * normal a flat form passes stays null here: a soft form is a solid body, and its sort
-                 * key is the distance to its origin rather than to a quad's plane. */
-                VertexBuffer buffer = new VertexBuffer(VertexBuffer.Usage.STATIC);
-
-                buffer.bind();
-                buffer.upload(built);
-                VertexBuffer.unbind();
-
-                Matrix4f modelView = new Matrix4f(RenderSystem.getModelViewMatrix());
-                Vector3f origin = modelView.transformPosition(matrix.getTranslation(new Vector3f()));
-
-                FormTranslucentQueue.add(new FormTranslucentQueue.VertexBufferCommand(
-                    /* No plane normal: this is a mesh rather than a flat quad, so it keeps
-                     * sorting by the distance to its origin the way it always did. */
-                    buffer, () -> finalShader, texture, modelView, null, origin, null, true,
-                    () ->
-                    {
-                        texture.bind();
-                        texture.setFilterMipmap(linear, mipmap);
-                    },
-                    () -> texture.setFilterMipmap(false, false)
-                ));
-            }
-            else
-            {
-                BufferRenderer.drawWithGlobalProgram(built);
-            }
+                gameRenderer.getLightmapTextureManager().enable();
+                gameRenderer.getOverlayTexture().setupOverlayColor();
+                RenderSystem.setShader(() -> finalShader);
+                texture.bind();
+                texture.setFilterMipmap(linear, mipmap);
+                try { BufferRenderer.drawWithGlobalProgram(built); }
+                finally
+                {
+                    texture.setFilterMipmap(false, false);
+                    gameRenderer.getLightmapTextureManager().disable();
+                    gameRenderer.getOverlayTexture().teardownOverlayColor();
+                }
+            };
+            if (!defer || !SoftFlatDraw.tryDefer(color.a, false, false, false,
+                () -> SoftFlatDraw.eyeDistanceSq(matrices), draw)) draw.run();
         }
-
         texture.setFilterMipmap(false, false);
 
         gameRenderer.getLightmapTextureManager().disable();

@@ -30,7 +30,7 @@ public class BBSPhysicsClient implements ClientModInitializer
          * the exported video. They used to be taken by mixing into the film controller; since BBS
          * 2.6 they are events it posts on purpose, so four of its method names stopped being a
          * contract nobody had agreed to. */
-        PhysicsApiIntegration.register();
+
         FilmEvents.CREATED.register(FilmScenes::onSetup);
         FilmEvents.TICK_AFTER.register(FilmScenes::onTick);
         FilmEvents.RENDER_AFTER.register(FilmScenes::onRender);

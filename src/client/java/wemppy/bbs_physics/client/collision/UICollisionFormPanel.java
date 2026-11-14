@@ -1,6 +1,6 @@
 package wemppy.bbs_physics.client.collision;
 
-import mchorse.bbs_mod.api.client.editor.FormEditorTool;
+import wemppy.bbs_physics.client.forms.FormEditorTool;
 import mchorse.bbs_mod.ui.framework.elements.input.drag.TransformSpace;
 
 import mchorse.bbs_mod.cubic.IModel;
@@ -89,7 +89,7 @@ import java.util.function.UnaryOperator;
  * pushed into eight bones would be eight boxes in eight wrong places. The bulk answer to "give these
  * bones a shape" already exists and is measured per bone — that is what "Automatic" mode is.</p>
  */
-public class UICollisionFormPanel extends UIFormPanel<Form> implements FormEditorTool
+public class UICollisionFormPanel extends wemppy.bbs_physics.client.forms.CmlFormPanel implements FormEditorTool
 {
     /** One model pixel, in blocks — the step every distance here scrolls by. */
     private static final double PIXEL = 1D / 16D;
@@ -185,7 +185,7 @@ public class UICollisionFormPanel extends UIFormPanel<Form> implements FormEdito
         this.bones.background();
         this.bonesSearch = new UISearchList<>(this.bones);
         this.bonesSearch.label(UIKeys.GENERAL_SEARCH);
-        this.bonesSearch.h(20 + UIConstants.LIST_ITEM_HEIGHT * 8).expand();
+        this.bonesSearch.h(20 + UIConstants.LIST_ITEM_HEIGHT * 8);
         this.bones.context(() -> new UIDataContextMenu(PhysicsPresets.COLLISION, this.presetGroup, this::toPresetData, this::applyPresetData).tooltips("_CopyCollision",
             PhysicsKeys.COLLISION_CONTEXT_COPY,
             PhysicsKeys.COLLISION_CONTEXT_PASTE,
@@ -604,7 +604,7 @@ public class UICollisionFormPanel extends UIFormPanel<Form> implements FormEdito
         }
 
         Set<String> chains = ChainBones.of(this.form, model instanceof Model cubic ? cubic : null);
-        Vector3f scale = this.model.getScale();
+        Vector3f scale = this.model.scale;
         FormCollision collision = this.collision;
 
         for (String bone : this.bones.getList())
@@ -690,7 +690,7 @@ public class UICollisionFormPanel extends UIFormPanel<Form> implements FormEdito
 
         if (this.model != null && this.model.model != null)
         {
-            this.presetGroup = this.model.getPoseGroup();
+            this.presetGroup = this.model.poseGroup;
 
             /* Every bone, the ones the model marks as disabled included. That list is a posing
              * filter -- "do not let the animator crank this bone" -- and on the standard player it

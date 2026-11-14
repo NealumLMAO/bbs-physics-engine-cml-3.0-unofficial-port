@@ -72,7 +72,7 @@ public final class StructureRig implements SceneRig
             throw new IllegalArgumentException("Destruction does not support a sheared structure transform.");
         }
 
-        Vector3f offset = new Vector3f(-data.size.getX() / 2F, 0F, -data.size.getZ() / 2F).sub(form.origin.get());
+        Vector3f offset = new Vector3f(-data.size.getX() / 2F, 0F, -data.size.getZ() / 2F);
         StructureRenderWorld blockWorld = new StructureRenderWorld(data, form.biome.get());
         List<BlockPos> positions = new ArrayList<>();
         List<List<Box>> shapes = new ArrayList<>();

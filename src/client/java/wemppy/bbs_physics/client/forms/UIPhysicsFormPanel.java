@@ -40,7 +40,7 @@ import wemppy.bbs_physics.ragdoll.FormRagdolls;
 import java.util.function.UnaryOperator;
 
 /** Selects one physics type and edits its settings without changing collision markup. */
-public class UIPhysicsFormPanel extends UIFormPanel<Form>
+public class UIPhysicsFormPanel extends wemppy.bbs_physics.client.forms.CmlFormPanel
 {
     private final UIButton physicsType;
     private final UIElement physicsTypeRow;

@@ -1,11 +1,11 @@
 package wemppy.bbs_physics.client.scene;
 
 import mchorse.bbs_mod.BBSSettings;
-import mchorse.bbs_mod.cubic.ModelInstance;
+
 import mchorse.bbs_mod.film.BaseFilmController;
 import mchorse.bbs_mod.film.Film;
 import mchorse.bbs_mod.forms.forms.Form;
-import mchorse.bbs_mod.forms.renderers.utils.RenderFrame;
+
 import mchorse.bbs_mod.settings.values.numeric.ValueBoolean;
 import mchorse.bbs_mod.settings.values.numeric.ValueInt;
 import wemppy.bbs_physics.BBSPhysicsSettings;
@@ -43,7 +43,7 @@ public final class PhysicsSceneCheck
         require(!attemptedJolt(), "Empty film must not initialize Jolt, even with debug enabled");
 
         Form root = new Form() {};
-        checkPoseCache(controller, root);
+        checkPoseSampling(root);
         require(PhysicsForms.isSimulatedTree(new ChainForm()), "Rope must be detected as physics");
         require(!PhysicsForms.isSimulatedTree(new Form() {}), "Plain form must not be simulated");
         int[] visits = {0};
@@ -64,30 +64,23 @@ public final class PhysicsSceneCheck
         System.out.println("PhysicsSceneCheck passed: absent films, form presence, lifecycle cleanup and edit filtering.");
     }
 
-    /** Catch-up ticks share a render frame and silent track writes keep the pose version. */
-    private static void checkPoseCache(Controller controller, Form form)
+    /** CML has no channel epoch cache; every integer sample must update the runtime value. */
+    private static void checkPoseSampling(Form form)
     {
-        SceneCast cast = new SceneCast(controller);
-        ModelInstance model = new ModelInstance("physics-cache-check", null, null, null);
-        Object entity = new Object();
-        int version = form.getPoseVersion();
-
-        for (int tick = 0; tick < 3; tick++)
+        var knob = new mchorse.bbs_mod.settings.values.numeric.ValueFloat("physics_sample", 0F, 0F, 20F);
+        form.add(knob);
+        var properties = new mchorse.bbs_mod.film.replays.FormProperties("properties");
+        var channel = properties.getOrCreate(form, "physics_sample");
+        require(channel != null, "CML must expose visible numeric form values as tracks");
+        channel.insert(0F, 0F);
+        channel.insert(10F, 10F);
+        for (int tick : new int[]{0, 10, 0, 10})
         {
-            model.stampChannels(form, entity, 1F, RenderFrame.getEpoch(), version);
-            require(model.matchesChannels(form, entity, 1F, RenderFrame.getEpoch(), version),
-                "Repeated reads of the same pose should reuse channels");
-            cast.apply(tick);
-            require(!model.matchesChannels(form, entity, 1F, RenderFrame.getEpoch(), version),
-                "A simulation tick must not reuse the previous tick's channels");
+            properties.applyProperties(form, tick);
+            require(knob.get() == (float) tick, "Scrubbing must resample the numeric track");
         }
-
-        model.stampChannels(form, entity, 1F, RenderFrame.getEpoch(), version);
-        cast.restore(20);
-        require(!model.matchesChannels(form, entity, 1F, RenderFrame.getEpoch(), version),
-            "Viewport restore must not reuse simulation channels");
+        require(knob.getOriginalValue() == 0F, "Sampling must preserve authored values");
     }
-
     private static Set<?> empty() throws Exception
     {
         Field field = FilmScenes.class.getDeclaredField("EMPTY");

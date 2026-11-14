@@ -54,13 +54,20 @@ public final class ImpulseRadiusHandle extends UIElement implements IUITreeEvent
     private ImpulseActionClip selected()
     {
         return this.controller.canControl() || this.controller.panel.isFlying()
-            || this.controller.panel.isRunning() || this.controller.getEditTarget().isNone()
+            || this.controller.panel.isRunning()
             ? null : ImpulseGizmo.selected(this.controller.panel);
+    }
+
+    private mchorse.bbs_mod.camera.Camera viewportCamera()
+    {
+        var camera = new mchorse.bbs_mod.camera.Camera();
+        this.controller.panel.copyViewportCamera(camera);
+        return camera;
     }
 
     private boolean overMoveHandle()
     {
-        var stencil = this.controller.getGizmoStencil();
+        var stencil = this.controller.picking.getGizmoStencil();
         return stencil.hasPicked() && stencil.getIndex() >= Gizmo.STENCIL_X
             && stencil.getIndex() <= Gizmo.STENCIL_MAX;
     }
@@ -79,7 +86,7 @@ public final class ImpulseRadiusHandle extends UIElement implements IUITreeEvent
         Point center = clip.point.get();
         this.axis.set((float) (this.picked.x - center.x), (float) (this.picked.y - center.y), (float) (this.picked.z - center.z)).normalize();
         /* A plane containing the radius, oriented towards the camera, also works in orthographic view. */
-        this.projection.setup(this.controller.panel.getCamera(), this.controller.getGizmoArea(), this.picked);
+        this.projection.setup(this.viewportCamera(), this.controller.picking.getGizmoArea(), this.picked);
         this.projection.rayDirection(context.mouseX, context.mouseY, this.normal);
         this.normal.fma(-this.normal.dot(this.axis), this.axis);
         if (this.normal.lengthSquared() < 0.01F) return false;
@@ -157,10 +164,10 @@ public final class ImpulseRadiusHandle extends UIElement implements IUITreeEvent
         if (accept && radius != this.original)
         {
             var undo = this.controller.panel.getUndoHandler();
-            undo.submitUndo(true);
+            undo.submitUndo();
             undo.getUndoManager().markLastUndoNoMerging();
             clip.radius.set(radius);
-            undo.submitUndo(true);
+            undo.submitUndo();
             undo.getUndoManager().markLastUndoNoMerging();
         }
         this.controller.panel.actionEditor.fillData();
@@ -168,11 +175,11 @@ public final class ImpulseRadiusHandle extends UIElement implements IUITreeEvent
 
     private boolean pick(UIContext context, ImpulseActionClip clip)
     {
-        Area viewport = this.controller.getGizmoArea();
+        Area viewport = this.controller.picking.getGizmoArea();
         if (!viewport.isInside(context.mouseX, context.mouseY)) return false;
         Point center = clip.point.get();
-        this.projection.setup(this.controller.panel.getCamera(), viewport, center.x, center.y, center.z);
-        this.projection.projection.set(this.controller.getGizmoProjection());
+        this.projection.setup(this.viewportCamera(), viewport, center.x, center.y, center.z);
+        this.projection.projection.set(this.controller.picking.getGizmoProjection());
         double radius = Math.max(0.05F, clip.radius.get());
         Vector3d a = new Vector3d();
         Vector3d b = new Vector3d();

@@ -2,7 +2,7 @@ package wemppy.bbs_physics.client.scene;
 
 import mchorse.bbs_mod.film.BaseFilmController;
 import mchorse.bbs_mod.film.Film;
-import mchorse.bbs_mod.film.FilmMatrices;
+
 import mchorse.bbs_mod.film.replays.Replay;
 import mchorse.bbs_mod.forms.FormUtilsClient;
 import mchorse.bbs_mod.forms.entities.IEntity;
@@ -102,7 +102,7 @@ public class FilmScene implements AutoCloseable
     private final SceneClips clips = new SceneClips(this);
 
     /** The film's cast, as the anchor resolution needs it — an anchor points at another actor. */
-    private final Map<String, IEntity> entities;
+    private final io.netty.util.collection.IntObjectMap<IEntity> entities;
 
     /** The film being simulated, for its length — the recording has no reason to run past the end. */
     private final Film film;
@@ -837,9 +837,9 @@ public class FilmScene implements AutoCloseable
                     Anchor authored = root.anchor.get().copy();
                     authored.previous = root.anchor.get().previous == null ? null : root.anchor.get().previous.copy();
                     authored.x = root.anchor.get().x;
-                    Matrix4f plain = FilmMatrices.getMatrixForRenderWithRotation(member.entity, 0D, 0D, 0D, 1F);
-                    Pair<Matrix4f, Float> resolved = FilmMatrices.getTotalMatrix(
-                        this.entities, authored, plain, 0D, 0D, 0D, 1F, 0, false, null);
+                    Matrix4f plain = BaseFilmController.getMatrixForRenderWithRotation(member.entity, 0D, 0D, 0D, 1F);
+                    Pair<Matrix4f, Float> resolved = BaseFilmController.getTotalMatrix(
+                        this.entities, authored, plain, 0D, 0D, 0D, 1F, 0);
                     bake.anchorFrame(root, new Matrix4f(resolved.a == null ? plain : resolved.a).invert().mul(effective));
                 }
 
@@ -1007,7 +1007,7 @@ public class FilmScene implements AutoCloseable
             weight = 1F;
         }
 
-        if (weight <= 0F || !resolve.hasTarget())
+        if (weight <= 0F || resolve.replay == -1)
         {
             return ChainRig.Attach.NONE;
         }
@@ -1053,8 +1053,8 @@ public class FilmScene implements AutoCloseable
             targetAnchor.x = 1F;
         }
 
-        Pair<Matrix4f, Float> matrix = FilmMatrices.getTotalMatrix(
-            this.entities, targetAnchor, new Matrix4f(), 0D, 0D, 0D, 1F, 0, true, null);
+        Pair<Matrix4f, Float> matrix = BaseFilmController.getTotalMatrix(
+            this.entities, targetAnchor, new Matrix4f(), 0D, 0D, 0D, 1F, 0);
 
         if (matrix.a == null)
         {
@@ -1096,7 +1096,7 @@ public class FilmScene implements AutoCloseable
     Matrix4f actorWorld(IEntity entity, float transition, boolean anchoredFrame)
     {
         /* Zero camera: the actor's placement in the world, not on the screen. */
-        Matrix4f matrix = FilmMatrices.getMatrixForRenderWithRotation(entity, 0D, 0D, 0D, transition);
+        Matrix4f matrix = BaseFilmController.getMatrixForRenderWithRotation(entity, 0D, 0D, 0D, transition);
         Form root = entity.getForm();
 
         if (root == null || !anchoredFrame)
@@ -1104,8 +1104,8 @@ public class FilmScene implements AutoCloseable
             return matrix;
         }
 
-        Pair<Matrix4f, Float> anchored = FilmMatrices.getTotalMatrix(
-            this.entities, root.anchor.get(), matrix, 0D, 0D, 0D, transition, 0, false, null);
+        Pair<Matrix4f, Float> anchored = BaseFilmController.getTotalMatrix(
+            this.entities, root.anchor.get(), matrix, 0D, 0D, 0D, transition, 0);
 
         return anchored.a == null ? matrix : anchored.a;
     }

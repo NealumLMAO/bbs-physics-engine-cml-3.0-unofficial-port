@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "id": "bbs_physics_cml_smoke",
+  "version": "1.0.0",
+  "name": "CML Physics Development Checks",
+  "environment": "client",
+  "entrypoints": { "client": ["wemppy.bbs_physics.checks.CmlClientCheck"] },
+  "depends": { "bbs_physics": "*" }
+}

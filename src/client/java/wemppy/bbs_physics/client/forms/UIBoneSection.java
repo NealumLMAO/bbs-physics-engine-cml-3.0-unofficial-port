@@ -71,7 +71,7 @@ public abstract class UIBoneSection extends UIElement
         this.relayout = relayout;
 
         this.column(UIConstants.MARGIN).vertical().stretch();
-        this.expand();
+
 
         this.bones = new UIPhysicsBoneList((l) ->
         {
@@ -101,7 +101,7 @@ public abstract class UIBoneSection extends UIElement
 
         this.bonesSearch = new UISearchList<>(this.bones);
         this.bonesSearch.label(UIKeys.GENERAL_SEARCH);
-        this.bonesSearch.h(20 + UIConstants.LIST_ITEM_HEIGHT * 8).expand();
+        this.bonesSearch.h(20 + UIConstants.LIST_ITEM_HEIGHT * 8);
 
         this.enabled = new UIToggle(PhysicsKeys.BONES_ENABLED, (toggle) ->
         {
@@ -279,7 +279,7 @@ public abstract class UIBoneSection extends UIElement
      */
     protected BoneSelection boneSelection()
     {
-        IBoneSelectionHost host = this.getAncestor(IBoneSelectionHost.class);
+        IBoneSelectionHost host = wemppy.bbs_physics.client.forms.CmlUi.ancestor(this, IBoneSelectionHost.class);
 
         return host == null ? this.detachedSelection : host.getBoneSelection();
     }

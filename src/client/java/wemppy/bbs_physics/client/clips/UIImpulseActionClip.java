@@ -84,8 +84,8 @@ public class UIImpulseActionClip extends UIActionClip<ImpulseActionClip>
         super.registerPanels();
 
         this.panels.add(this.point);
-        this.panels.add(this.section(PhysicsKeys.CLIP_STRENGTH, this.strength));
-        this.panels.add(this.section(PhysicsKeys.CLIP_RADIUS, this.radius));
+        this.panels.add(new mchorse.bbs_mod.ui.framework.elements.UISection(PhysicsKeys.CLIP_STRENGTH, this.strength));
+        this.panels.add(new mchorse.bbs_mod.ui.framework.elements.UISection(PhysicsKeys.CLIP_RADIUS, this.radius));
         this.panels.add(this.radial);
         this.panels.add(this.onlyThisReplay);
         this.panels.add(this.direction);

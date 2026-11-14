@@ -209,17 +209,17 @@ public final class SceneActor
     }
 
     /** Prepare anchor dependencies before the actor, including actors without a physics modifier. */
-    public static void prepareRender(IEntity entity, Map<String, IEntity> entities, float transition)
+    public static void prepareRender(IEntity entity, io.netty.util.collection.IntObjectMap<IEntity> entities, float transition)
     {
         prepareRender(entity, entities, transition, true);
     }
 
-    public static void prepareRender(IEntity entity, Map<String, IEntity> entities, float transition, boolean anchored)
+    public static void prepareRender(IEntity entity, io.netty.util.collection.IntObjectMap<IEntity> entities, float transition, boolean anchored)
     {
         prepareRender(entity, entities, transition, anchored, Collections.newSetFromMap(new IdentityHashMap<>()));
     }
 
-    private static void prepareRender(IEntity entity, Map<String, IEntity> entities, float transition,
+    private static void prepareRender(IEntity entity, io.netty.util.collection.IntObjectMap<IEntity> entities, float transition,
         boolean anchored, Set<IEntity> visited)
     {
         if (entity == null || entity.getForm() == null || !visited.add(entity)) return;

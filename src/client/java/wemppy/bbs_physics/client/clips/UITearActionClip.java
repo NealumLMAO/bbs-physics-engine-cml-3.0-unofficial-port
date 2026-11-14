@@ -66,8 +66,8 @@ public class UITearActionClip extends UIActionClip<TearActionClip>
     {
         super.registerPanels();
 
-        this.panels.add(this.section(PhysicsKeys.CLIP_BONE, this.bone));
-        this.panels.add(this.section(PhysicsKeys.CLIP_KICK, this.strength));
+        this.panels.add(new mchorse.bbs_mod.ui.framework.elements.UISection(PhysicsKeys.CLIP_BONE, this.bone));
+        this.panels.add(new mchorse.bbs_mod.ui.framework.elements.UISection(PhysicsKeys.CLIP_KICK, this.strength));
         this.panels.add(this.direction);
     }
 

@@ -55,7 +55,7 @@ public class SceneStatusOverlay extends UIElement
 
     private SceneStatus status()
     {
-        UIFilmPanel panel = this.getAncestor(UIFilmPanel.class);
+        UIFilmPanel panel = wemppy.bbs_physics.client.forms.CmlUi.ancestor(this, UIFilmPanel.class);
 
         return panel == null ? null : FilmScenes.getStatus(panel.getController().editorController);
     }

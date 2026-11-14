@@ -1,7 +1,7 @@
 package wemppy.bbs_physics.client.clips;
 
 import mchorse.bbs_mod.camera.data.Point;
-import mchorse.bbs_mod.film.FilmTarget;
+import mchorse.bbs_mod.utils.Pair;
 import mchorse.bbs_mod.ui.film.UIFilmPanel;
 import mchorse.bbs_mod.ui.framework.elements.input.UIPropTransform;
 import mchorse.bbs_mod.ui.framework.elements.input.drag.TransformSpace;
@@ -41,12 +41,12 @@ public class ImpulseGizmo extends UIPropTransform
 
     public static ImpulseActionClip selected(UIFilmPanel panel)
     {
-        return panel.isReplayEditorSelected() && panel.actionEditor.isVisible()
+        return panel.actionEditor.isVisible()
             && panel.actionEditor.getClip() instanceof ImpulseActionClip impulse && impulse.enabled.get()
             ? impulse : null;
     }
 
-    public FilmTarget select(ImpulseActionClip clip)
+    public Pair<String, TransformSpace> select(ImpulseActionClip clip)
     {
         if (!this.isEditing())
         {
@@ -56,7 +56,7 @@ public class ImpulseGizmo extends UIPropTransform
             this.setTransform(this.scratch);
         }
 
-        return new FilmTarget(FilmTarget.Kind.ROOT, TARGET_PREFIX + clip.getId(), TransformSpace.WORLD);
+        return new Pair<>(TARGET_PREFIX + clip.getId(), TransformSpace.WORLD);
     }
 
     @Override

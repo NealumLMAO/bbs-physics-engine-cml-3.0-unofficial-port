@@ -1,8 +1,8 @@
 package wemppy.bbs_physics.client;
 
-import mchorse.bbs_mod.api.client.events.RegisterFilmToolsEvent;
+
 import mchorse.bbs_mod.api.client.events.RegisterFormPanelsEvent;
-import mchorse.bbs_mod.api.client.events.RegisterReplayActionsEvent;
+
 import mchorse.bbs_mod.ui.forms.editors.forms.UIForm;
 import wemppy.bbs_physics.client.clips.PhysicsFilmTool;
 import wemppy.bbs_physics.client.collision.UICollisionFormPanel;
@@ -20,7 +20,7 @@ import mchorse.bbs_mod.api.client.events.RegisterFormRenderersEvent;
 import mchorse.bbs_mod.api.client.events.RegisterFormSectionsEvent;
 import mchorse.bbs_mod.api.client.events.RegisterL10nEvent;
 import mchorse.bbs_mod.api.client.events.RegisterPreviewOverlaysEvent;
-import mchorse.bbs_mod.api.client.events.RegisterTrackStylesEvent;
+import mchorse.bbs_mod.api.client.events.RegisterTrackPresentationEvent;
 import mchorse.bbs_mod.resources.Link;
 import mchorse.bbs_mod.ui.utils.icons.Icons;
 import wemppy.bbs_physics.BBSPhysics;
@@ -72,27 +72,13 @@ public class BBSPhysicsClientAddon implements BBSAddonMod
     }
 
     @Subscribe
-    public void onRegisterReplayActions(RegisterReplayActionsEvent event)
+    public void onRegisterTrackStyles(RegisterTrackPresentationEvent event)
     {
-        event.register(FilmBake::button);
-    }
-
-    @Subscribe
-    public void onRegisterFilmTools(RegisterFilmToolsEvent event)
-    {
-        event.register(PhysicsFilmTool::new);
-    }
-
-    @Subscribe
-    public void onRegisterTrackStyles(RegisterTrackStylesEvent event)
-    {
-        event.register(PhysicsForms.AUTHORITY_KEY, Icons.PHYSICS, 0x62c980);
-        event.registerLabel(PhysicsForms.AUTHORITY_KEY, PhysicsKeys.AUTHORITY);
+        registerTrack(event, PhysicsForms.AUTHORITY_KEY, 0x62c980, PhysicsKeys.AUTHORITY);
 
         for (BodyKnob knob : BodyKnob.values())
         {
-            event.register(knob.id, Icons.BLOCK, 0xe5a45b);
-            event.registerLabel(knob.id, switch (knob)
+            registerTrack(event, knob.id, 0xe5a45b, switch (knob)
             {
                 case MASS -> PhysicsKeys.MASS;
                 case FRICTION -> PhysicsKeys.FRICTION;
@@ -105,8 +91,7 @@ public class BBSPhysicsClientAddon implements BBSAddonMod
 
         for (RagdollKnob knob : RagdollKnob.values())
         {
-            event.register(knob.id, Icons.POSE, 0xb28be0);
-            event.registerLabel(knob.id, switch (knob)
+            registerTrack(event, knob.id, 0xb28be0, switch (knob)
             {
                 case MASS -> PhysicsKeys.RAGDOLL_MASS;
                 case DAMPING -> PhysicsKeys.RAGDOLL_DAMPING;
@@ -119,8 +104,7 @@ public class BBSPhysicsClientAddon implements BBSAddonMod
 
         for (ChainKnob knob : ChainKnob.values())
         {
-            event.register(knob.id, Icons.CURVES, 0x58bec9);
-            event.registerLabel(knob.id, switch (knob)
+            registerTrack(event, knob.id, 0x58bec9, switch (knob)
             {
                 case STIFFNESS -> PhysicsKeys.CHAIN_STIFFNESS_LABEL;
                 case DAMPING -> PhysicsKeys.CHAIN_DAMPING_LABEL;
@@ -132,6 +116,12 @@ public class BBSPhysicsClientAddon implements BBSAddonMod
         }
     }
 
+    private static void registerTrack(RegisterTrackPresentationEvent event, String id, int color, mchorse.bbs_mod.l10n.keys.IKey label)
+    {
+        String key = label instanceof mchorse.bbs_mod.l10n.keys.LangKey lang ? lang.key : "bbs_physics.forms.category";
+        event.register(new mchorse.bbs_mod.api.replays.TrackPresentation(id, key, color,
+            "bbs_physics:physics", "bbs_physics.forms.category", "", 0));
+    }
     @Subscribe
     public void onRegisterL10n(RegisterL10nEvent event)
     {
@@ -141,14 +131,14 @@ public class BBSPhysicsClientAddon implements BBSAddonMod
     @Subscribe
     public void onRegisterClientSettings(RegisterClientSettingsEvent event)
     {
-        event.register(Icons.PHYSICS, BBSPhysics.MOD_ID, BBSPhysicsSettings::register);
+        event.register(Icons.PHYSICS, BBSPhysics.MOD_ID, mchorse.bbs_mod.BBSMod.getSettingsPath("bbs_physics.json"), BBSPhysicsSettings::register);
     }
 
     @Subscribe
     public void onRegisterKeybinds(RegisterKeybindsEvent event)
     {
         event.register(PhysicsKeybinds.class);
-        event.registerCategoryIcon("bbs_physics", Icons.PHYSICS);
+
     }
 
     @Subscribe

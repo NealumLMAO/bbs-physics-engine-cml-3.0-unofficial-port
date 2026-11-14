@@ -26,6 +26,9 @@ public class PhysicsFormSection extends FormSection
 {
     private FormCategory category;
 
+    @Override
+    public mchorse.bbs_mod.l10n.keys.IKey getTitle() { return PhysicsKeys.CATEGORY; }
+
     public PhysicsFormSection(FormCategories parent)
     {
         super(parent);
@@ -59,7 +62,7 @@ public class PhysicsFormSection extends FormSection
 
         /* An icon like every other category in the palette carries since 2.6 — without one
          * ours would be the only heading with a blank where the others have a picture. */
-        this.category = new FormCategory(PhysicsKeys.CATEGORY, this.parent.preferences.visible("bbs_physics")).icon(Icons.PHYSICS);
+        this.category = new FormCategory(PhysicsKeys.CATEGORY, this.parent.visibility.get("bbs_physics"));
         this.category.addForm(cloth);
         this.category.addForm(balloon);
         this.category.addForm(chain);

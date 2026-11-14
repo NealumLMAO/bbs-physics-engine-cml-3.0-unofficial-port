@@ -92,9 +92,9 @@ any other edit of the film.
 
 ## Requirements
 
-* Minecraft with **Fabric Loader** and **Fabric API**
-* **Java 17** or newer
-* **[BBS](https://github.com/Wemppy4/bbs-fs)** — this is an addon, it does nothing on its own
+* Minecraft **1.21.1**, **Fabric Loader 0.19.5+**, and **Fabric API**
+* **Java 21** or newer
+* **BBS CML 3.0-beta-7-1.21.1** — this is an addon, it does nothing on its own
 
 There are no prebuilt downloads: BBS itself is not published to a public repository, so both are
 built from source. See [Building](#building).
@@ -142,11 +142,11 @@ to ordinary collisions, propagate through missing supports, or bake to keyframes
 BBS is not published to any repository, so its jar goes into `libs/` by hand:
 
 ```
-libs/bbs-<version>-<minecraft>.jar
-libs/bbs-<version>-<minecraft>-sources.jar   # optional, for reading what you build against
+libs/bbs-cml-3.0-beta-7-1.21.1.jar
+libs/bbs-cml-3.0-beta-7-1.21.1-sources.jar   # optional, for reading what you build against
 ```
 
-`bbs_version` in `gradle.properties` picks which of them is used — `2.7-1.21.1` on this branch —
+`bbs_version` in `gradle.properties` picks which of them is used — `3.0-beta-7-1.21.1` in this checkout —
 and the build stops with a clear message if that file is not there. The folder is git-ignored, so
 the jars are never committed; take them from a BBS release, or from `build/libs/` of a BBS
 checkout after `gradlew build`.
@@ -163,11 +163,17 @@ gradlew build      # the jar lands in build/libs/
 gradlew runClient  # starts the game with both BBS and this addon loaded
 ```
 
-Note that this dev client runs BBS **without Sodium and Iris** — they are compile-time
-dependencies of BBS, not of this project, and pulling them in transitively was turned off. BBS's
-mixins that target them log a warning and are skipped. To test anything that touches rendering
-under shaders, add them here as `modLocalRuntime` first.
+The development client includes Iris 1.8.8 and Sodium 0.6.13 as runtime dependencies because
+this CML build has required Iris/Sodium mixins. They are not bundled in the physics addon jar.
 
+`gradlew build` runs all six physics checks. To test mixin application, form editors, serialization,
+keyframed physics values, indexed replay sampling, and Jolt inside Minecraft, run:
+
+```sh
+gradlew runClient -PcmlSmoke
+```
+
+The smoke check exits automatically. Its separate development mod is never packaged in the addon.
 ## How it plugs into BBS
 
 BBS loads addons through two entry points: it instantiates the listed classes and scans them for
@@ -217,15 +223,11 @@ MIT.
 
 ## BBS API integration
 
-This checkout now requires **BBS 2.7 with addon API 2**. Build the matching BBS first and put
-`bbs-2.7-1.21.1.jar` (and optionally its sources jar) in `libs/`. Older 2.6 builds do not provide
-the editor/pose/structure hooks this version uses; the addon rejects them on initialization.
+This checkout targets **BBS CML 3.0-beta-7-1.21.1**. Put the matching CML jar in `libs/`.
+The addon metadata requires that exact version because its CML mixins target the implementation
+verified by the development smoke check.
 
-Physics values now use `bbs_physics:` names. BBS reads the registered old `bbs_physics_` names
-and migrates their animation tracks and hidden-track settings as well. Open and save older
-films once with this updated pair installed before removing the addon; migrated namespaced
-settings then survive saving with the addon disabled.
-
-Pose evaluation, editor panels/actions, undo/redo invalidation, timeline/preview overlays,
-viewport tools and structure fragments use the public API. The remaining mixins hold runtime
-form state, initialize newly created impulse clips and customize the landing screen.
+Registration, settings, preview overlays, track presentation, and film lifecycle use CML's APIs.
+Addon-owned mixins connect pose substitution, collision gizmos, impulse tools, edit invalidation,
+timeline overlays, and structure fragments where CML has no equivalent public hooks. The obsolete
+landing-screen banner mixin was removed because that screen no longer exists in CML.

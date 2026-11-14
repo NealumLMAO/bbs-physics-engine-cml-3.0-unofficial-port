@@ -96,7 +96,7 @@ public class BBSPhysicsSettings
 
     public static void register(SettingsBuilder builder)
     {
-        builder.category("general", Icons.PHYSICS);
+        builder.category("general");
 
         enabled = builder.getBoolean("enabled", true);
         debug = builder.getBoolean("debug", false);
