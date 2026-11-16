@@ -92,9 +92,9 @@ any other edit of the film.
 
 ## Requirements
 
-* Minecraft **1.21.1**, **Fabric Loader 0.19.5+**, and **Fabric API**
+* Minecraft **1.21.4**, **Fabric Loader 0.19.5+**, and **Fabric API**
 * **Java 21** or newer
-* **BBS CML 3.0-beta-7-1.21.1** — this is an addon, it does nothing on its own
+* **BBS CML 3.0-beta-9-1.21.4** — this is an addon, it does nothing on its own
 
 There are no prebuilt downloads: BBS itself is not published to a public repository, so both are
 built from source. See [Building](#building).
@@ -142,11 +142,11 @@ to ordinary collisions, propagate through missing supports, or bake to keyframes
 BBS is not published to any repository, so its jar goes into `libs/` by hand:
 
 ```
-libs/bbs-cml-3.0-beta-7-1.21.1.jar
-libs/bbs-cml-3.0-beta-7-1.21.1-sources.jar   # optional, for reading what you build against
+libs/bbs-cml-3.0-beta-9-1.21.4.jar
+.og-sources/bbs-cml-3.0-1.21.4/            # CML API source reference
 ```
 
-`bbs_version` in `gradle.properties` picks which of them is used — `3.0-beta-7-1.21.1` in this checkout —
+`bbs_version` in `gradle.properties` picks which of them is used — `3.0-beta-9-1.21.4` in this checkout —
 and the build stops with a clear message if that file is not there. The folder is git-ignored, so
 the jars are never committed; take them from a BBS release, or from `build/libs/` of a BBS
 checkout after `gradlew build`.
@@ -223,7 +223,7 @@ MIT.
 
 ## BBS API integration
 
-This checkout targets **BBS CML 3.0-beta-7-1.21.1**. Put the matching CML jar in `libs/`.
+This checkout targets **BBS CML 3.0-beta-9-1.21.4**. Put the matching CML jar in `libs/`.
 The addon metadata requires that exact version because its CML mixins target the implementation
 verified by the development smoke check.
 
@@ -231,3 +231,31 @@ Registration, settings, preview overlays, track presentation, and film lifecycle
 Addon-owned mixins connect pose substitution, collision gizmos, impulse tools, edit invalidation,
 timeline overlays, and structure fragments where CML has no equivalent public hooks. The obsolete
 landing-screen banner mixin was removed because that screen no longer exists in CML.
+
+### Minecraft 1.21.4 port
+
+The supplied reference trees live in `.og-sources/`: `bbs-cml-3.0-1.21.4` is the
+CML API reference, `bbs-physics-engine-1.21.1` is the original FS implementation,
+and `bbs-physics-engine-cml-3.0-1.21.1` is the previous CML adaptation.
+The CML source tree replaces the need for a sources jar when inspecting APIs;
+Gradle still uses the matching compiled CML jar in `libs/` for compilation and launch.
+
+The port uses 1.21.4 shader program keys and CML picking keys, measures item collision
+bounds through the layered `ItemRenderState` pipeline, and uses the world's inclusive
+top height. Development launches use the same 1.21.4 Iris/Sodium versions as CML.
+The required CML version in the manifest comes from `bbs_version` to keep it aligned
+with the compile dependency.
+
+Validation commands:
+
+```sh
+gradlew build cmlSmokeClasses
+gradlew runClient -PcmlSmoke
+```
+
+The build runs cache, pose, settings, scene, destruction, and simulation speed checks.
+The opt-in client check loads the CML integration targets and verifies form editors,
+renderers, serialization, timeline values, replay sampling, and Jolt initialization.
+After resources load, it also measures generated, block, and special item models, checks
+display transforms, and draws cloth, balloons, and rope with normal and picking shaders.
+This is a smoke check; it does not validate full film playback or active shader packs.

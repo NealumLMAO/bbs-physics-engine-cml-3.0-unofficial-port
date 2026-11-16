@@ -16,7 +16,8 @@ import wemppy.bbs_physics.BBSPhysics;
 import wemppy.bbs_physics.chain.ChainForm;
 import wemppy.bbs_physics.chain.ChainState;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gl.ShaderProgram;
+import net.minecraft.client.gl.ShaderProgramKey;
+import net.minecraft.client.gl.ShaderProgramKeys;
 import net.minecraft.client.render.BufferBuilder;
 import net.minecraft.client.render.BufferRenderer;
 import net.minecraft.client.render.GameRenderer;
@@ -30,7 +31,6 @@ import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
-import java.util.function.Supplier;
 
 /**
  * Draws a chain: each segment where the simulation has it when a scene has claimed the form, and
@@ -246,19 +246,17 @@ public class ChainFormRenderer extends FormRenderer<ChainForm>
 
         Texture texture = BBSModClient.getTextures().getTexture(ROPE);
 
-        Supplier<ShaderProgram> shader = context == null
-            ? GameRenderer::getRenderTypeEntityTranslucentProgram
-            : this.getShader(context, GameRenderer::getRenderTypeEntityTranslucentProgram, BBSShaders::getPickerBillboardProgram);
+        ShaderProgramKey shader = context == null
+            ? ShaderProgramKeys.RENDERTYPE_ENTITY_TRANSLUCENT
+            : this.getShader(context, ShaderProgramKeys.RENDERTYPE_ENTITY_TRANSLUCENT, BBSShaders.PICKER_BILLBOARD_KEY);
 
         GameRenderer gameRenderer = MinecraftClient.getInstance().gameRenderer;
 
         gameRenderer.getLightmapTextureManager().enable();
         gameRenderer.getOverlayTexture().setupOverlayColor();
 
-        ShaderProgram finalShader = shader.get();
-
         BBSModClient.getTextures().bindTexture(texture);
-        RenderSystem.setShader(() -> finalShader);
+        RenderSystem.setShader(shader);
 
         texture.bind();
 

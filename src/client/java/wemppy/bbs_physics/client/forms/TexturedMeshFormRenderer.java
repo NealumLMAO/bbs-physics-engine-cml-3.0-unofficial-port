@@ -18,8 +18,8 @@ import mchorse.bbs_mod.utils.colors.Color;
 import mchorse.bbs_mod.utils.colors.Colors;
 import wemppy.bbs_physics.forms.ITexturedForm;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gl.ShaderProgram;
-import net.minecraft.client.gl.VertexBuffer;
+import net.minecraft.client.gl.ShaderProgramKey;
+import net.minecraft.client.gl.ShaderProgramKeys;
 import net.minecraft.client.render.BufferBuilder;
 import net.minecraft.client.render.BufferRenderer;
 import net.minecraft.client.render.BuiltBuffer;
@@ -35,7 +35,6 @@ import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
 
-import java.util.function.Supplier;
 
 /**
  * Drawing a soft form: one texture over a mesh whose vertices come from the simulation, or from the
@@ -112,7 +111,7 @@ public abstract class TexturedMeshFormRenderer<T extends Form & ITexturedForm> e
         {
             this.draw(
                 VertexFormats.POSITION_COLOR_TEXTURE_OVERLAY_LIGHT_NORMAL,
-                GameRenderer::getRenderTypeEntityTranslucentProgram,
+                ShaderProgramKeys.RENDERTYPE_ENTITY_TRANSLUCENT,
                 stack, OverlayTexture.DEFAULT_UV, LightmapTextureManager.MAX_LIGHT_COORDINATE, Colors.WHITE,
                 0F, false);
         }
@@ -142,15 +141,15 @@ public abstract class TexturedMeshFormRenderer<T extends Form & ITexturedForm> e
         }
 
         VertexFormat format = shading ? VertexFormats.POSITION_COLOR_TEXTURE_OVERLAY_LIGHT_NORMAL : VertexFormats.POSITION_TEXTURE_LIGHT_COLOR;
-        Supplier<ShaderProgram> shader = this.getShader(context,
-            shading ? GameRenderer::getRenderTypeEntityTranslucentProgram : GameRenderer::getPositionTexColorProgram,
-            shading ? BBSShaders::getPickerBillboardProgram : BBSShaders::getPickerBillboardNoShadingProgram
+        ShaderProgramKey shader = this.getShader(context,
+            shading ? ShaderProgramKeys.RENDERTYPE_ENTITY_TRANSLUCENT : ShaderProgramKeys.POSITION_TEX_COLOR,
+            shading ? BBSShaders.PICKER_BILLBOARD_KEY : BBSShaders.PICKER_BILLBOARD_NO_SHADING_KEY
         );
 
         this.draw(format, shader, context.stack, context.overlay, context.light, context.color, context.getTransition(), !context.ui && !context.isPicking());
     }
 
-    private void draw(VertexFormat format, Supplier<ShaderProgram> shader, MatrixStack matrices, int overlay, int light, int overlayColor, float transition, boolean defer)
+    private void draw(VertexFormat format, ShaderProgramKey shader, MatrixStack matrices, int overlay, int light, int overlayColor, float transition, boolean defer)
     {
         Link link = this.form.getTexture().get();
 
@@ -194,10 +193,8 @@ public abstract class TexturedMeshFormRenderer<T extends Form & ITexturedForm> e
         gameRenderer.getLightmapTextureManager().enable();
         gameRenderer.getOverlayTexture().setupOverlayColor();
 
-        ShaderProgram finalShader = shader.get();
-
         BBSModClient.getTextures().bindTexture(texture);
-        RenderSystem.setShader(() -> finalShader);
+        RenderSystem.setShader(shader);
 
         boolean linear = this.form.getLinear().get();
         boolean mipmap = this.form.getMipmap().get();
@@ -220,7 +217,7 @@ public abstract class TexturedMeshFormRenderer<T extends Form & ITexturedForm> e
             {
                 gameRenderer.getLightmapTextureManager().enable();
                 gameRenderer.getOverlayTexture().setupOverlayColor();
-                RenderSystem.setShader(() -> finalShader);
+                RenderSystem.setShader(shader);
                 texture.bind();
                 texture.setFilterMipmap(linear, mipmap);
                 try { BufferRenderer.drawWithGlobalProgram(built); }

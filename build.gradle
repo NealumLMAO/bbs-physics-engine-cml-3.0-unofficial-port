@@ -95,8 +95,8 @@ dependencies {
 	modImplementation files(bbsArtifact)
 
     // CML has required Iris/Sodium mixins. These dependencies are development runtime only.
-    modRuntimeOnly "maven.modrinth:YL57xq9U:zsoi0dso" // Iris 1.8.8 for Fabric 1.21.1
-    modRuntimeOnly "maven.modrinth:AANobbMI:u1OEbNKx" // Sodium 0.6.13 for Fabric 1.21.1
+    modRuntimeOnly "maven.modrinth:iris:1.8.8+1.21.4-fabric" // Iris 1.8.8 for Fabric 1.21.4
+    modRuntimeOnly "maven.modrinth:sodium:mc1.21.4-0.6.13-fabric" // Sodium 0.6.13 for Fabric 1.21.4
 
 	// Jolt Physics. Every platform artifact of jolt-jni carries the same Java classes, so one
 	// of them is taken for the API and the rest contribute nothing but their native library,
@@ -121,9 +121,10 @@ dependencies {
 processResources {
 	inputs.property "version", project.version
 	inputs.property "minecraft_range", minecraftRange
+	inputs.property "bbs_version", project.bbs_version
 
 	filesMatching("fabric.mod.json") {
-		expand "version": project.version, "minecraft_range": minecraftRange
+		expand "version": project.version, "minecraft_range": minecraftRange, "bbs_version": project.bbs_version
 	}
 }
 

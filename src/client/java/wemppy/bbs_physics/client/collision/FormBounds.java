@@ -10,19 +10,17 @@ import wemppy.bbs_physics.collision.CollisionKind;
 import wemppy.bbs_physics.collision.CollisionShape;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.render.model.BakedModel;
-import net.minecraft.client.render.model.BakedQuad;
+import net.minecraft.client.render.item.ItemRenderState;
+import net.minecraft.client.render.LightmapTextureManager;
+import net.minecraft.client.render.OverlayTexture;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.EntityDimensions;
 import net.minecraft.entity.EntityType;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.random.Random;
 import net.minecraft.util.shape.VoxelShape;
 import net.minecraft.world.EmptyBlockView;
-import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
 
@@ -40,11 +38,11 @@ import java.util.List;
  * <li><b>A block</b> from its own outline, box by box — stairs get two boxes and a slab gets a
  * slab. The block is drawn from its corner and shifted half a block on X and Z, so the boxes
  * stand centred on the form with their feet at zero, as the block does.</li>
- * <li><b>An item</b> from the quads of its baked model, under the display transform the form
- * renders it with, and shifted to the centre the way vanilla shifts every item. A flat item
+ * <li><b>An item</b> from the vertices emitted by its resolved render-state layers, under
+ * the display transforms and centering used by vanilla. A flat item
  * comes out as the sixteenth-of-a-block plate its sprite is built into; a block item comes out as
- * the block. Items drawn by code rather than by a model (a chest, a shield) have no quads to
- * measure and fall back to the block-sized box.</li>
+ * the block. Special item renderers (a chest, a shield) are measured through the same consumer;
+ * an item that emits no geometry falls back to the block-sized box.</li>
  * <li><b>A picture</b> (billboard) and <b>an extruded texture</b> from the painted pixels of
  * their texture — the transparent margin around a sprite is not part of the thing — as a plate
  * a sixteenth of a block thick for the extrusion, and as thin as the engine allows for the
@@ -71,9 +69,6 @@ public final class FormBounds
      * thickness the pixel mode uses for a flat contour, a quarter of a pixel.
      */
     private static final float PICTURE_DEPTH = 1F / 64F;
-
-    /** Floats per vertex in a baked quad: position, colour, texture, light, normal. */
-    private static final int QUAD_STRIDE = 8;
 
     private FormBounds()
     {}
@@ -148,9 +143,7 @@ public final class FormBounds
     }
 
     /**
-     * The item as its baked model draws it: every quad's corners, put through the display
-     * transform the form renders with and the half-block shift vanilla applies after it, and
-     * boxed.
+     * The resolved item geometry, including layer display transforms and special renderers.
      */
     private static List<CollisionShape> ofItem(ItemForm form)
     {
@@ -162,48 +155,17 @@ public final class FormBounds
             return null;
         }
 
-        BakedModel model = mc.getItemRenderer().getModel(stack, null, null, 0);
+        /* Resolve the same layered item state as ItemRenderer. Each layer applies its own
+         * display transform; measuring emitted vertices also covers composite and special models. */
+        ItemRenderState state = new ItemRenderState();
+        mc.getItemModelManager().update(state, stack, form.modelTransform.get(), false, mc.world, null, 0);
+        ItemBoundsConsumer bounds = new ItemBoundsConsumer();
+        state.render(new MatrixStack(), layer -> bounds,
+            LightmapTextureManager.MAX_LIGHT_COORDINATE,
+            OverlayTexture.DEFAULT_UV);
 
-        if (model == null || model.isBuiltin())
-        {
-            return null;
-        }
-
-        /* Exactly what ItemRenderer.renderItem does before it hands the quads over, so that the
-         * box lands where the item is drawn under this form's display mode. */
-        MatrixStack matrices = new MatrixStack();
-
-        model.getTransformation().getTransformation(form.modelTransform.get()).apply(false, matrices);
-        matrices.translate(-0.5F, -0.5F, -0.5F);
-
-        Matrix4f matrix = matrices.peek().getPositionMatrix();
-        Random random = Random.create(42L);
-        Vector3f min = new Vector3f(Float.MAX_VALUE);
-        Vector3f max = new Vector3f(-Float.MAX_VALUE);
-        Vector4f point = new Vector4f();
-        boolean any = false;
-
-        for (int side = -1; side < Direction.values().length; side++)
-        {
-            Direction direction = side < 0 ? null : Direction.values()[side];
-
-            for (BakedQuad quad : model.getQuads(null, direction, random))
-            {
-                int[] data = quad.getVertexData();
-
-                for (int at = 0; at + 2 < data.length; at += QUAD_STRIDE)
-                {
-                    point.set(Float.intBitsToFloat(data[at]), Float.intBitsToFloat(data[at + 1]), Float.intBitsToFloat(data[at + 2]), 1F);
-                    matrix.transform(point);
-
-                    min.min(new Vector3f(point.x, point.y, point.z));
-                    max.max(new Vector3f(point.x, point.y, point.z));
-                    any = true;
-                }
-            }
-        }
-
-        return any ? List.of(box(min.x, min.y, min.z, max.x, max.y, max.z)) : null;
+        return bounds.hasVertices() ? List.of(box(bounds.min.x, bounds.min.y, bounds.min.z,
+            bounds.max.x, bounds.max.y, bounds.max.z)) : null;
     }
 
     /**

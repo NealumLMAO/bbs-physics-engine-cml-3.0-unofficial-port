@@ -86,9 +86,69 @@ public class CmlClientCheck implements ClientModInitializer
             // Let CML's asynchronous model/texture loads finish before closing Minecraft.
             int[] remaining = {100};
             net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents.END_CLIENT_TICK.register(ticking ->
-            { if (--remaining[0] == 0) ticking.scheduleStop(); });
+            {
+                if (--remaining[0] == 0)
+                {
+                    try
+                    {
+                        checkPortRendering();
+                        BBSPhysics.LOGGER.info("CML_PORT_CHECK PASSED: layered item bounds, display transforms, special items, shaded/unshaded soft meshes, rope and picking shaders.");
+                    }
+                    catch (Throwable failure)
+                    {
+                        BBSPhysics.LOGGER.error("CML_PORT_CHECK FAILED", failure);
+                        System.exit(1);
+                    }
+                    ticking.scheduleStop();
+                }
+            });
         });
     }
+    private static void checkPortRendering()
+    {
+        ItemForm item = new ItemForm();
+        item.stack.set(new net.minecraft.item.ItemStack(net.minecraft.item.Items.DIAMOND));
+        item.modelTransform.set(net.minecraft.item.ModelTransformationMode.NONE);
+        var flat = wemppy.bbs_physics.client.collision.FormBounds.of(item).getFirst();
+        require(flat.size().z < 0.1F && flat.size().x > 0.2F, "Generated item geometry, without fallback box");
+        require(Math.abs(flat.offset().y) < 0.1F, "Centered item bounds");
+        item.stack.set(new net.minecraft.item.ItemStack(net.minecraft.item.Items.STONE));
+        var cube = wemppy.bbs_physics.client.collision.FormBounds.of(item).getFirst();
+        require(cube.size().distance(new org.joml.Vector3f(1F)) < 0.001F, "Block item bounds");
+        item.modelTransform.set(net.minecraft.item.ModelTransformationMode.GUI);
+        var gui = wemppy.bbs_physics.client.collision.FormBounds.of(item).getFirst();
+        require(gui.size().distance(cube.size()) > 0.1F, "Item layer display transform");
+        item.stack.set(new net.minecraft.item.ItemStack(net.minecraft.item.Items.SHIELD));
+        item.modelTransform.set(net.minecraft.item.ModelTransformationMode.NONE);
+        var shield = wemppy.bbs_physics.client.collision.FormBounds.of(item).getFirst();
+        require(shield.size().z < 0.5F, "Special item renderer geometry");
+
+        var context = new mchorse.bbs_mod.forms.renderers.FormRenderingContext().set(null,
+            new mchorse.bbs_mod.forms.entities.StubEntity(), new net.minecraft.client.util.math.MatrixStack(),
+            net.minecraft.client.render.LightmapTextureManager.MAX_LIGHT_COORDINATE,
+            net.minecraft.client.render.OverlayTexture.DEFAULT_UV, 0F).inUI();
+        ClothForm cloth = new ClothForm();
+        cloth.texture.set(new mchorse.bbs_mod.resources.Link(BBSPhysics.ASSETS, "textures/cloth.png"));
+        BalloonForm balloon = new BalloonForm();
+        balloon.texture.set(new mchorse.bbs_mod.resources.Link(BBSPhysics.ASSETS, "textures/balloon.png"));
+        var clothRenderer = new wemppy.bbs_physics.client.forms.ClothFormRenderer(cloth);
+        var balloonRenderer = new wemppy.bbs_physics.client.forms.BalloonFormRenderer(balloon);
+        var ropeRenderer = new wemppy.bbs_physics.client.forms.ChainFormRenderer(new ChainForm());
+        for (boolean picking : new boolean[] {false, true})
+        {
+            context.stencilMap = picking ? new mchorse.bbs_mod.ui.framework.elements.utils.StencilMap() : null;
+            for (boolean shading : new boolean[] {true, false})
+            {
+                cloth.shading.set(shading);
+                balloon.shading.set(shading);
+                clothRenderer.render3D(context);
+                balloonRenderer.render3D(context);
+            }
+            ropeRenderer.render3D(context);
+        }
+        require(org.lwjgl.opengl.GL11.glGetError() == org.lwjgl.opengl.GL11.GL_NO_ERROR, "Port rendering OpenGL state");
+    }
+
     private static void checkCast()
     {
         var film = new Film();
