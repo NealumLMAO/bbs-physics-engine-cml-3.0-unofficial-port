@@ -94,7 +94,7 @@ any other edit of the film.
 
 * Minecraft **1.21.1**, **Fabric Loader 0.19.5+**, and **Fabric API**
 * **Java 21** or newer
-* **BBS CML 3.0-beta-7-1.21.1** — this is an addon, it does nothing on its own
+* **BBS CML 3.0-beta-9-1.21.1** — this is an addon, it does nothing on its own
 
 There are no prebuilt downloads: BBS itself is not published to a public repository, so both are
 built from source. See [Building](#building).
@@ -142,11 +142,11 @@ to ordinary collisions, propagate through missing supports, or bake to keyframes
 BBS is not published to any repository, so its jar goes into `libs/` by hand:
 
 ```
-libs/bbs-cml-3.0-beta-7-1.21.1.jar
-libs/bbs-cml-3.0-beta-7-1.21.1-sources.jar   # optional, for reading what you build against
+libs/bbs-cml-3.0-beta-9-1.21.1.jar
+.og-sources/bbs-cml-3.0-1.21.1/            # CML API source reference
 ```
 
-`bbs_version` in `gradle.properties` picks which of them is used — `3.0-beta-7-1.21.1` in this checkout —
+`bbs_version` in `gradle.properties` picks which of them is used — `3.0-beta-9-1.21.1` in this checkout —
 and the build stops with a clear message if that file is not there. The folder is git-ignored, so
 the jars are never committed; take them from a BBS release, or from `build/libs/` of a BBS
 checkout after `gradlew build`.
@@ -223,7 +223,7 @@ MIT.
 
 ## BBS API integration
 
-This checkout targets **BBS CML 3.0-beta-7-1.21.1**. Put the matching CML jar in `libs/`.
+This checkout targets **BBS CML 3.0-beta-9-1.21.1**. Put the matching CML jar in `libs/`.
 The addon metadata requires that exact version because its CML mixins target the implementation
 verified by the development smoke check.
 
@@ -231,3 +231,19 @@ Registration, settings, preview overlays, track presentation, and film lifecycle
 Addon-owned mixins connect pose substitution, collision gizmos, impulse tools, edit invalidation,
 timeline overlays, and structure fragments where CML has no equivalent public hooks. The obsolete
 landing-screen banner mixin was removed because that screen no longer exists in CML.
+
+### CML 3.0 beta 9 update for Minecraft 1.21.1
+
+This checkout uses the supplied `.og-sources/bbs-cml-3.0-1.21.1/` tree as its CML
+API reference and `libs/bbs-cml-3.0-beta-9-1.21.1.jar` for compilation and launch.
+The manifest's exact CML requirement is generated from `bbs_version`. Fabric API
+and the Iris/Sodium development runtime versions match the supplied CML source build.
+
+Minecraft 1.21.1 keeps its shader supplier and baked item model APIs. The 1.21.4
+shader-key and layered item-render-state changes belong to the 1.21.4 branch.
+The existing CML form, film, pose, and structure integration is compatible with beta 9.
+
+`gradlew build cmlSmokeClasses` runs all six physics checks. `gradlew runClient -PcmlSmoke`
+checks CML integration and, after resources load, item collision bounds and display
+transforms plus shaded, unshaded, and picking draws for cloth, balloons, and rope.
+Full film playback and active shader packs have not been manually validated.
